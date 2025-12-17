@@ -1,45 +1,21 @@
 name: DevSecOps Security Scan
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 jobs:
   security_scan:
-    name: Trivy Security Analysis
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write 
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # STEP 1: Generate the Dashboard Report (This will always "Succeed")
-      - name: Generate Security Dashboard Report
+      - name: Hard Security Gate
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          security-checks: 'vuln,secret,config'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      # STEP 2: Upload that report to GitHub
-      - name: Upload to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() 
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      # STEP 3: THE SECURITY GATE (This will "Fail" the build)
-      # We use 'table' format here so it prints clearly in your logs
-      - name: Evaluate Security Gate
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          security-checks: 'vuln,secret,config'
+          # We force it to look for BOTH vulnerabilities and secrets
+          scanners: 'vuln,secret' 
           format: 'table'
-          exit-code: '1' # This is the "Kill Switch"
-          severity: 'CRITICAL,HIGH'
+          # This MUST exit with 1 if it finds anything
+          exit-code: '1'
+          # Lowered severity to 'MEDIUM' to ensure it catches the old 'requests'
+          severity: 'CRITICAL,HIGH,MEDIUM'

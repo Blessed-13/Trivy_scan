@@ -2,9 +2,9 @@ import os
 
 # TEST 1: Hardcoded Secret (Trivy should catch this)
 # In a real app, use environment variables or AWS Secrets Manager!
-AWS_ACCESS_KEY = "AKIAEXAMPLE123456789" 
-AWS_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
+AWS_ACCESS_KEY_ID = "AKIAIMNOBAX7VQX98765" 
+AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 def start_server():
     print("Starting the Cloud/DevOps Test Server...")
     # Mock logic for your Lambda function
