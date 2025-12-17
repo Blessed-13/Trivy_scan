@@ -6,27 +6,40 @@ on:
     branches: [ "main" ]
 
 jobs:
-  trivy_scan:
-    name: Security Scan (Trivy)
+  security_scan:
+    name: Trivy Security Analysis
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write 
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. SCAN FILESYSTEM (Finds vulnerabilities in requirements.txt / package.json)
-      - name: Run Trivy FS Scan
+      # STEP 1: Generate the Dashboard Report (This will always "Succeed")
+      - name: Generate Security Dashboard Report
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          ignore-unfixed: true
-          format: 'table'
-          exit-code: '1' # THIS STOPS THE PIPELINE IF VULNERABILITIES ARE FOUND
-          severity: 'CRITICAL,HIGH'
+          security-checks: 'vuln,secret,config'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
 
-      # 2. SCAN SECRETS (Finds hardcoded passwords or AWS keys)
-      - name: Run Trivy Secrets Scan
+      # STEP 2: Upload that report to GitHub
+      - name: Upload to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() 
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      # STEP 3: THE SECURITY GATE (This will "Fail" the build)
+      # We use 'table' format here so it prints clearly in your logs
+      - name: Evaluate Security Gate
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          scanners: 'secret'
-          exit-code: '1'
+          security-checks: 'vuln,secret,config'
+          format: 'table'
+          exit-code: '1' # This is the "Kill Switch"
+          severity: 'CRITICAL,HIGH'
