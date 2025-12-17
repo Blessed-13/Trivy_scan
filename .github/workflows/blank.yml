@@ -1,0 +1,32 @@
+name: DevSecOps Security Scan
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  trivy_scan:
+    name: Security Scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. SCAN FILESYSTEM (Finds vulnerabilities in requirements.txt / package.json)
+      - name: Run Trivy FS Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '1' # THIS STOPS THE PIPELINE IF VULNERABILITIES ARE FOUND
+          severity: 'CRITICAL,HIGH'
+
+      # 2. SCAN SECRETS (Finds hardcoded passwords or AWS keys)
+      - name: Run Trivy Secrets Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scanners: 'secret'
+          exit-code: '1'
